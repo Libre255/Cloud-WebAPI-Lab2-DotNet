@@ -1,11 +1,12 @@
 ﻿using Cloud_Dev_Web_Lab2_DotNET_API.Modules;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using System.Text;
 
 namespace Cloud_Dev_Web_Lab2_DotNET_API.Controllers
 {
     [ApiController]
-    [Route("watch?v=dwaufhewoigt4o")]
+    [Route("KladerAPIDotNet")]
     public class KläderapiController : Controller
     {
         [HttpGet]
@@ -13,27 +14,40 @@ namespace Cloud_Dev_Web_Lab2_DotNET_API.Controllers
         {
             using(var client = new HttpClient())
             {
-                var endpoint = new Uri("");
+                var endpoint = new Uri("https://clothesapi.azurewebsites.net/getClothes");
                 var result = client.GetAsync(endpoint).Result;
-                var json = result.Content.ReadAsStringAsync().Result; //json result
+                var json = result.Content.ReadAsStringAsync().Result; 
                 return Ok(json);
             }
         }
         [HttpPost]
-        public void Post(Clothes Item)
+        public IActionResult Post(Clothes Item)
         {
             using(var client = new HttpClient())
             {
-                Uri endpoint = new Uri("");
-                Clothes newClothes = new Clothes()
+                Uri endpoint = new Uri("https://clothesapi.azurewebsites.net/addclothes");
+                var newClothesJson = JsonConvert.SerializeObject(Item);
+                var payload = new StringContent(newClothesJson, Encoding.UTF8, "application/json");
+                var result = client.PostAsync(endpoint, payload).Result.Content.ReadAsStringAsync().Result;
+
+                return Ok(result);
+            }
+        }
+        [HttpDelete]
+        public IActionResult Delet(int Id)
+        {
+            using (var client = new HttpClient())
+            {
+                Uri endpoint = new Uri("https://clothesapi.azurewebsites.net/deletclothes", UriKind.Relative);
+                HttpRequestMessage request = new HttpRequestMessage
                 {
-                    id = 333,
-                    name = "Paourme",
-                    type = "Coat"
+                    Method = HttpMethod.Delete,
+                    RequestUri = endpoint,
+                    Content = JsonContent.Create(Id)
                 };
-                var newClothesJson = JsonConvert.SerializeObject(newClothes);
-
-
+                Task<HttpResponseMessage> response = client.SendAsync(request);//may not work
+                var finalResult = response.Result.RequestMessage.ToString();
+                return Ok(response);
             }
         }
     }
